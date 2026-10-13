@@ -30,6 +30,7 @@ class MainActivity : AppCompatActivity() {
                 .putExtra(ScreenCaptureService.EXTRA_RESULT_CODE, result.resultCode)
                 .putExtra(ScreenCaptureService.EXTRA_DATA, result.data)
             ContextCompat.startForegroundService(this, intent)
+            moveTaskToBack(true)
         }
     }
 

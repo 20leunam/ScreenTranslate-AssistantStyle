@@ -8,7 +8,7 @@
     <string name="label_target">Idioma de destino</string>
     <string name="btn_start">2) Activar captura</string>
     <string name="btn_stop">Detener</string>
-    <string name="qs_help">Después de activar: baja el panel de Ajustes rápidos, edita los botones y arrastra el botón \"Traducir\" a la barra. Pulsa ese botón para traducir la pantalla actual.</string>
+    <string name="qs_help">Activa la captura aquí una vez. Después, usa el botón \"Traducir\" de Ajustes rápidos: púlsalo para traducir la pantalla y vuelve a pulsarlo para ocultar la traducción.</string>
     <string name="status_inactive">Captura inactiva</string>
     <string name="status_active">Captura activa. Usa el botón de Ajustes rápidos para traducir.</string>
 </resources>

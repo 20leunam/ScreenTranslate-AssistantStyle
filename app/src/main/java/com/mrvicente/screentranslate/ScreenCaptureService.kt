@@ -38,6 +38,9 @@ class ScreenCaptureService : Service() {
 
         @Volatile
         var isRunning = false
+
+        @Volatile
+        var isOverlayVisible = false
     }
 
     private val handler = Handler(Looper.getMainLooper())
@@ -75,7 +78,7 @@ class ScreenCaptureService : Service() {
             }
             ACTION_TRANSLATE -> {
                 startAsForeground()
-                capture()
+                toggleTranslate()
             }
             ACTION_STOP -> stopEverything()
         }
@@ -131,6 +134,25 @@ class ScreenCaptureService : Service() {
         densityDpi = resources.displayMetrics.densityDpi
     }
 
+    private fun toggleTranslate() {
+        if (!isRunning) {
+            toast("La captura no está activa")
+            return
+        }
+        if (isOverlayVisible) {
+            hideTranslation()
+        } else {
+            capture()
+        }
+    }
+
+    private fun hideTranslation() {
+        overlay?.clear()
+        isOverlayVisible = false
+        TranslateTileService.requestUpdate(this)
+        toast("Traducción oculta")
+    }
+
     private fun capture(attempt: Int = 0) {
         val reader = imageReader ?: return
         val image = try {
@@ -161,8 +183,15 @@ class ScreenCaptureService : Service() {
         overlay?.clear()
         TranslatePipeline.process(bitmap, source, target,
             onResult = { items ->
-                if (items.isEmpty()) toast("No se detectó texto traducible")
-                else overlay?.show(items)
+                if (items.isEmpty()) {
+                    isOverlayVisible = false
+                    toast("No se detectó texto traducible")
+                } else {
+                    overlay?.show(items)
+                    isOverlayVisible = true
+                    TranslateTileService.requestUpdate(this)
+                    toast("Traducción activada")
+                }
             },
             onError = { e -> toast("Error: ${e.message}") }
         )
@@ -185,6 +214,7 @@ class ScreenCaptureService : Service() {
         val wasRunning = isRunning
         stopping = true
         isRunning = false
+        isOverlayVisible = false
         persistRunning(false)
         TranslateTileService.requestUpdate(this)
         overlay?.clear()
