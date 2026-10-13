@@ -112,6 +112,8 @@ class ScreenCaptureService : Service() {
             handler
         )
         isRunning = true
+        persistRunning(true)
+        TranslateTileService.requestUpdate(this)
         toast("Captura activa. Usa el botón de Ajustes rápidos.")
     }
 
@@ -180,8 +182,11 @@ class ScreenCaptureService : Service() {
 
     private fun stopEverything() {
         if (stopping) return
+        val wasRunning = isRunning
         stopping = true
         isRunning = false
+        persistRunning(false)
+        TranslateTileService.requestUpdate(this)
         overlay?.clear()
         try {
             virtualDisplay?.release()
@@ -194,7 +199,13 @@ class ScreenCaptureService : Service() {
         projection?.stop()
         projection = null
         ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
+        if (wasRunning) toast("Captura detenida")
         stopSelf()
+    }
+
+    private fun persistRunning(running: Boolean) {
+        getSharedPreferences(Constants.PREFS, Context.MODE_PRIVATE)
+            .edit().putBoolean(Constants.KEY_RUNNING, running).apply()
     }
 
     override fun onDestroy() {
@@ -204,15 +215,19 @@ class ScreenCaptureService : Service() {
     }
 
     private fun startAsForeground() {
-        if (Build.VERSION.SDK_INT >= 29) {
-            ServiceCompat.startForeground(
-                this,
-                NOTIF_ID,
-                buildNotification(),
-                ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION
-            )
-        } else {
-            startForeground(NOTIF_ID, buildNotification())
+        try {
+            if (Build.VERSION.SDK_INT >= 29) {
+                ServiceCompat.startForeground(
+                    this,
+                    NOTIF_ID,
+                    buildNotification(),
+                    ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION
+                )
+            } else {
+                startForeground(NOTIF_ID, buildNotification())
+            }
+        } catch (e: Exception) {
+            toast("No se pudo iniciar el servicio en primer plano: ${e.message}")
         }
     }
 

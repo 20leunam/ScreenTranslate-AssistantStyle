@@ -67,6 +67,7 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         updateStatus()
+        TranslateTileService.requestUpdate(this)
     }
 
     private fun setupSpinners() {
