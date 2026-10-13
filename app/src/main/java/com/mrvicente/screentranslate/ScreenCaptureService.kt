@@ -33,6 +33,7 @@ class ScreenCaptureService : Service() {
         const val ACTION_STOP = "com.mrvicente.screentranslate.STOP"
         const val EXTRA_RESULT_CODE = "result_code"
         const val EXTRA_DATA = "data"
+        const val EXTRA_TRANSLATE_NOW = "translate_now"
         private const val CHANNEL_ID = "screen_translate_channel"
         private const val NOTIF_ID = 42
 
@@ -74,11 +75,14 @@ class ScreenCaptureService : Service() {
                     intent.getParcelableExtra(EXTRA_DATA)
                 if (resultCode != 0 && data != null) {
                     startProjection(resultCode, data)
+                    if (intent.getBooleanExtra(EXTRA_TRANSLATE_NOW, false)) {
+                        handler.postDelayed({ capture() }, 700)
+                    }
                 }
             }
             ACTION_TRANSLATE -> {
                 startAsForeground()
-                toggleTranslate()
+                capture()
             }
             ACTION_STOP -> stopEverything()
         }
@@ -132,25 +136,6 @@ class ScreenCaptureService : Service() {
             height = dm.heightPixels
         }
         densityDpi = resources.displayMetrics.densityDpi
-    }
-
-    private fun toggleTranslate() {
-        if (!isRunning) {
-            toast("La captura no está activa")
-            return
-        }
-        if (isOverlayVisible) {
-            hideTranslation()
-        } else {
-            capture()
-        }
-    }
-
-    private fun hideTranslation() {
-        overlay?.clear()
-        isOverlayVisible = false
-        TranslateTileService.requestUpdate(this)
-        toast("Traducción oculta")
     }
 
     private fun capture(attempt: Int = 0) {

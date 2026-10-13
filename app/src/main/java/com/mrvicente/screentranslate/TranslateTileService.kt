@@ -8,7 +8,6 @@ import android.os.Build
 import android.service.quicksettings.Tile
 import android.service.quicksettings.TileService
 import android.widget.Toast
-import androidx.core.content.ContextCompat
 
 class TranslateTileService : TileService() {
 
@@ -31,31 +30,24 @@ class TranslateTileService : TileService() {
 
     override fun onClick() {
         super.onClick()
-        when {
-            !ScreenCaptureService.isRunning -> {
-                Toast.makeText(
-                    this,
-                    "La captura está apagada. Actívala en la app.",
-                    Toast.LENGTH_SHORT
-                ).show()
-                collapseAndStart(Intent(this, MainActivity::class.java), 2)
+        if (ScreenCaptureService.isRunning) {
+            Toast.makeText(this, "Captura y traducción desactivadas", Toast.LENGTH_SHORT).show()
+            try {
+                startService(
+                    Intent(this, ScreenCaptureService::class.java)
+                        .setAction(ScreenCaptureService.ACTION_STOP)
+                )
+            } catch (_: Exception) {
             }
-            ScreenCaptureService.isOverlayVisible -> {
-                Toast.makeText(this, "Ocultando traducción...", Toast.LENGTH_SHORT).show()
-                val intent = Intent(this, ScreenCaptureService::class.java)
-                    .setAction(ScreenCaptureService.ACTION_TRANSLATE)
-                ContextCompat.startForegroundService(this, intent)
-            }
-            else -> {
-                Toast.makeText(this, "Traduciendo la pantalla...", Toast.LENGTH_SHORT).show()
-                collapseAndStart(Intent(this, QuickTranslateActivity::class.java), 1)
-            }
+        } else {
+            Toast.makeText(this, "Activando captura... acepta el aviso del sistema", Toast.LENGTH_SHORT).show()
+            collapseAndStart(Intent(this, CaptureActivity::class.java), 1)
         }
     }
 
     private fun updateTileState() {
         qsTile?.let { tile ->
-            tile.state = if (ScreenCaptureService.isOverlayVisible)
+            tile.state = if (ScreenCaptureService.isRunning)
                 Tile.STATE_ACTIVE else Tile.STATE_INACTIVE
             tile.updateTile()
         }
